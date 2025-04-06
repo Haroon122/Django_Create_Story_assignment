@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{% if form.instance.pk %}Edit{% else %}Create{% endif %} Chapter - TaleForge{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'stories:story_list' %}">Stories</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'stories:story_detail' story.pk %}">{{ story.title }}</a></li>
+                <li class="breadcrumb-item active">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Chapter</li>
+            </ol>
+        </nav>
+
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title mb-0">{% if form.instance.pk %}Edit{% else %}Create{% endif %} Chapter</h2>
+            </div>
+            <div class="card-body">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-4">
+                                <h5>Chapter Details</h5>
+                                {{ form|crispy }}
+                            </div>
+                            
+                            {% if form.parent.value %}
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i> 
+                                You're continuing from a previous chapter. Your new chapter will appear as an alternative path.
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Writing Tips</h5>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="bi bi-check-circle text-success"></i>
+                                            Keep the story flowing naturally
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="bi bi-check-circle text-success"></i>
+                                            Create interesting choices
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="bi bi-check-circle text-success"></i>
+                                            Stay consistent with the story
+                                        </li>
+                                        <li>
+                                            <i class="bi bi-check-circle text-success"></i>
+                                            Proofread before submitting
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="card mt-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Important Notes</h5>
+                                    <ul class="list-unstyled mb-0">
+                                        <li class="mb-2">
+                                            <i class="bi bi-info-circle text-info"></i>
+                                            Your chapter will be pending approval
+                                        </li>
+                                        <li class="mb-2">
+                                            <i class="bi bi-info-circle text-info"></i>
+                                            Other users will vote on your chapter
+                                        </li>
+                                        <li>
+                                            <i class="bi bi-info-circle text-info"></i>
+                                            Approved chapters become part of the story
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            
+                            <div class="card mt-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Parent Chapter</h5>
+                                    <p class="card-text">
+                                        {% if form.parent.value %}
+                                            You're continuing from: <strong>{{ form.parent.value }}</strong>
+                                        {% else %}
+                                            This will be a new starting point for the story.
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{% url 'stories:story_detail' story.pk %}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            {% if form.instance.pk %}Save Changes{% else %}Submit Chapter{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

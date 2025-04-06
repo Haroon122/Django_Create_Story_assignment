@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}TaleForge - Collaborative Storytelling Platform{% endblock %}
+
+{% block content %}
+<div class="px-4 py-5 my-5 text-center">
+    <h1 class="display-4 fw-bold text-body-emphasis">Welcome to TaleForge</h1>
+    <div class="col-lg-6 mx-auto">
+        <p class="lead mb-4">
+            Join our collaborative storytelling platform where imagination knows no bounds.
+            Create interactive stories, contribute to others' tales, and shape narratives together.
+        </p>
+        <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+            {% if user.is_authenticated %}
+            <a href="{% url 'stories:story_create' %}" class="btn btn-primary btn-lg px-4 gap-3">Create Story</a>
+            <a href="{% url 'stories:story_list' %}" class="btn btn-outline-secondary btn-lg px-4">Browse Stories</a>
+            {% else %}
+            <a href="{% url 'accounts:register' %}" class="btn btn-primary btn-lg px-4 gap-3">Get Started</a>
+            <a href="{% url 'stories:story_list' %}" class="btn btn-outline-secondary btn-lg px-4">Browse Stories</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div class="container px-4 py-5">
+    <h2 class="pb-2 border-bottom">Features</h2>
+    <div class="row g-4 py-5 row-cols-1 row-cols-lg-3">
+        <div class="col d-flex align-items-start">
+            <div class="icon-square text-body-emphasis bg-body-secondary d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                <i class="bi bi-book"></i>
+            </div>
+            <div>
+                <h3 class="fs-2">Interactive Stories</h3>
+                <p>Create branching narratives where each chapter opens new possibilities. Your stories evolve based on readers' choices.</p>
+            </div>
+        </div>
+        <div class="col d-flex align-items-start">
+            <div class="icon-square text-body-emphasis bg-body-secondary d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                <i class="bi bi-people"></i>
+            </div>
+            <div>
+                <h3 class="fs-2">Collaborative Writing</h3>
+                <p>Join forces with other writers to expand stories. Propose new chapters and vote on contributions to shape the narrative.</p>
+            </div>
+        </div>
+        <div class="col d-flex align-items-start">
+            <div class="icon-square text-body-emphasis bg-body-secondary d-inline-flex align-items-center justify-content-center fs-4 flex-shrink-0 me-3">
+                <i class="bi bi-graph-up"></i>
+            </div>
+            <div>
+                <h3 class="fs-2">Track Progress</h3>
+                <p>Monitor your writing journey with detailed statistics. See your stories' growth and community engagement.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

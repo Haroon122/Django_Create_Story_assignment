@@ -1,0 +1,186 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ chapter.title }} - {{ chapter.story.title }} - TaleForge{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{% url 'stories:story_list' %}">Stories</a></li>
+                <li class="breadcrumb-item"><a href="{% url 'stories:story_detail' chapter.story.pk %}">{{ chapter.story.title }}</a></li>
+                <li class="breadcrumb-item active">{{ chapter.title }}</li>
+            </ol>
+        </nav>
+
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="card-title mb-1">{{ chapter.title }}</h1>
+                        <p class="text-muted mb-0">
+                            By <a href="{% url 'accounts:profile' chapter.author.username %}" class="text-decoration-none">{{ chapter.author.username }}</a>
+                            • {{ chapter.created_at|date }}
+                        </p>
+                    </div>
+                    <div class="text-end">
+                        {% if chapter.status == 'approved' %}
+                        <span class="badge bg-success">Approved</span>
+                        {% elif chapter.status == 'pending' %}
+                        <span class="badge bg-warning">Pending</span>
+                        {% else %}
+                        <span class="badge bg-danger">Rejected</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if chapter.parent %}
+                <div class="mb-4">
+                    <h5>Previous Chapter</h5>
+                    <div class="card">
+                        <div class="card-body">
+                            <h6 class="card-title">
+                                <a href="{% url 'stories:chapter_detail' chapter.parent.pk %}" class="text-decoration-none">
+                                    {{ chapter.parent.title }}
+                                </a>
+                            </h6>
+                            <p class="card-text">{{ chapter.parent.content|truncatewords:50 }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+
+                <div class="mb-4">
+                    <h5>Content</h5>
+                    <div class="card">
+                        <div class="card-body chapter-content">
+                            {{ chapter.content|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+
+                {% if user.is_authenticated and chapter.status == 'pending' %}
+                    {% if user == chapter.author or user.is_staff %}
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Chapter Management</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-3">As the author or an administrator, you can manually approve or reject this chapter.</p>
+                            <div class="d-flex gap-2">
+                                <form method="post" action="{% url 'stories:approve_chapter' chapter.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="bi bi-check-lg"></i> Approve Chapter
+                                    </button>
+                                </form>
+                                <form method="post" action="{% url 'stories:reject_chapter' chapter.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">
+                                        <i class="bi bi-x-lg"></i> Reject Chapter
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endif %}
+
+                {% if user.is_authenticated and chapter.status == 'pending' and user != chapter.author %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Vote on this Chapter</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>Current Votes:</span>
+                                <div>
+                                    <span class="badge bg-success me-2">
+                                        <i class="bi bi-hand-thumbs-up"></i> {{ chapter.votes_for }}
+                                    </span>
+                                    <span class="badge bg-danger">
+                                        <i class="bi bi-hand-thumbs-down"></i> {{ chapter.votes_against }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if user_vote %}
+                        <div class="alert alert-info mb-3">
+                            <i class="bi bi-info-circle"></i> You have already voted: 
+                            {% if user_vote.is_approve %}
+                            <span class="text-success">Approved</span>
+                            {% else %}
+                            <span class="text-danger">Rejected</span>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        
+                        <form method="post" action="{% url 'stories:vote_chapter' chapter.pk %}" class="d-flex gap-2">
+                            {% csrf_token %}
+                            <button type="submit" name="vote" value="approve" class="btn btn-success flex-grow-1">
+                                <i class="bi bi-hand-thumbs-up"></i> Approve
+                            </button>
+                            <button type="submit" name="vote" value="reject" class="btn btn-danger flex-grow-1">
+                                <i class="bi bi-hand-thumbs-down"></i> Reject
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Continue the Story</h5>
+            </div>
+            <div class="card-body">
+                {% if user.is_authenticated %}
+                <p>Have an idea for what happens next? Add your own chapter to continue the story!</p>
+                <a href="{% url 'stories:chapter_create' chapter.story.pk %}?parent={{ chapter.pk }}" class="btn btn-primary w-100">
+                    <i class="bi bi-plus-lg"></i> Add New Chapter
+                </a>
+                {% else %}
+                <p>Want to contribute to this story? Sign up or log in to add your own chapters!</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary">Sign Up</a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">Log In</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if chapter.children.exists %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Alternative Paths</h5>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    {% for child in chapter.children.all %}
+                    <a href="{% url 'stories:chapter_detail' child.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">{{ child.title }}</h6>
+                            {% if child.status == 'approved' %}
+                            <span class="badge bg-success">Approved</span>
+                            {% elif child.status == 'pending' %}
+                            <span class="badge bg-warning">Pending</span>
+                            {% else %}
+                            <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </div>
+                        <p class="mb-1">{{ child.content|truncatewords:20 }}</p>
+                        <small class="text-muted">By {{ child.author.username }} • {{ child.created_at|date }}</small>
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

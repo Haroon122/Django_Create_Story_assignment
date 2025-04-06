@@ -1,0 +1,215 @@
+{% extends 'base.html' %}
+{% load mptt_tags %}
+
+{% block title %}{{ story.title }} - TaleForge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chapter-tree {
+        margin-left: 20px;
+    }
+    .chapter-node {
+        margin: 10px 0;
+        padding: 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+    }
+    .chapter-node:hover {
+        background-color: #f8f9fa;
+    }
+    .chapter-status {
+        font-size: 0.875rem;
+    }
+    .chapter-votes {
+        font-size: 0.875rem;
+    }
+    .chapter-content {
+        white-space: pre-line;
+    }
+    .add-chapter-btn {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h1 class="card-title mb-1">{{ story.title }}</h1>
+                        <p class="text-muted mb-0">
+                            By <a href="{% url 'accounts:profile' story.author.username %}" class="text-decoration-none">{{ story.author.username }}</a>
+                            • {{ story.created_at|date }}
+                        </p>
+                    </div>
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'stories:chapter_create' story.pk %}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> Add Chapter
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="mb-4">
+                    <h5>Description</h5>
+                    <p class="card-text">{{ story.description }}</p>
+                </div>
+
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="mb-0">Story Tree</h5>
+                        {% if user.is_authenticated %}
+                        <div class="dropdown">
+                            <button class="btn btn-outline-primary btn-sm dropdown-toggle" type="button" id="addChapterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-plus-lg"></i> Add Chapter
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="addChapterDropdown">
+                                <li><a class="dropdown-item" href="{% url 'stories:chapter_create' story.pk %}">Start New Branch</a></li>
+                                {% if story.chapters.exists %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li><h6 class="dropdown-header">Continue from:</h6></li>
+                                {% for chapter in story.chapters.all %}
+                                {% if chapter.status == 'approved' %}
+                                <li><a class="dropdown-item" href="{% url 'stories:chapter_create' story.pk %}?parent={{ chapter.pk }}">{{ chapter.title }}</a></li>
+                                {% endif %}
+                                {% endfor %}
+                                {% endif %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="chapter-tree">
+                        {% recursetree story.chapters.all %}
+                            <div class="chapter-node">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="mb-1">
+                                            <a href="{% url 'stories:chapter_detail' node.pk %}" class="text-decoration-none">
+                                                {{ node.title }}
+                                            </a>
+                                        </h5>
+                                        <p class="text-muted mb-2">
+                                            By {{ node.author.username }} • {{ node.created_at|date }}
+                                        </p>
+                                    </div>
+                                    <div class="text-end">
+                                        <div class="chapter-status">
+                                            {% if node.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                            {% elif node.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                            {% else %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="chapter-votes mt-1">
+                                            <span class="text-success">
+                                                <i class="bi bi-hand-thumbs-up"></i> {{ node.votes_for }}
+                                            </span>
+                                            <span class="text-danger ms-2">
+                                                <i class="bi bi-hand-thumbs-down"></i> {{ node.votes_against }}
+                                            </span>
+                                        </div>
+                                        {% if user.is_authenticated and node.status == 'approved' %}
+                                        <div class="mt-2">
+                                            <a href="{% url 'stories:chapter_create' story.pk %}?parent={{ node.pk }}" class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-plus-lg"></i> Continue
+                                            </a>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                {% if not node.is_leaf_node %}
+                                    <div class="children mt-3">
+                                        {{ children }}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endrecursetree %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Story Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6>Genre</h6>
+                    <p class="mb-0">{{ story.genre }}</p>
+                </div>
+                <div class="mb-3">
+                    <h6>Statistics</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li>Total Chapters: {{ story.chapters.count }}</li>
+                        <li>Approved Chapters: {{ story.chapters.filter.status.approved.count }}</li>
+                        <li>Pending Chapters: {{ story.chapters.filter.status.pending.count }}</li>
+                    </ul>
+                </div>
+                <div>
+                    <h6>Contributors</h6>
+                    <div class="d-flex flex-wrap gap-2">
+                        {% for contributor in story.chapters.values_list.author__username.distinct %}
+                        <a href="{% url 'accounts:profile' contributor %}" class="text-decoration-none">
+                            <span class="badge bg-secondary">{{ contributor }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {% if user.is_authenticated %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Contribute to this Story</h5>
+            </div>
+            <div class="card-body">
+                <p>Have an idea for this story? Add your own chapter to continue the narrative!</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'stories:chapter_create' story.pk %}" class="btn btn-primary">
+                        <i class="bi bi-plus-lg"></i> Start New Branch
+                    </a>
+                    {% if story.chapters.exists %}
+                    <div class="dropdown">
+                        <button class="btn btn-outline-primary dropdown-toggle" type="button" id="continueFromDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Continue from Existing Chapter
+                        </button>
+                        <ul class="dropdown-menu w-100" aria-labelledby="continueFromDropdown">
+                            {% for chapter in story.chapters.all %}
+                            {% if chapter.status == 'approved' %}
+                            <li><a class="dropdown-item" href="{% url 'stories:chapter_create' story.pk %}?parent={{ chapter.pk }}">{{ chapter.title }}</a></li>
+                            {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">Want to Contribute?</h5>
+            </div>
+            <div class="card-body">
+                <p>Sign up or log in to add your own chapters to this story!</p>
+                <div class="d-grid gap-2">
+                    <a href="{% url 'accounts:register' %}" class="btn btn-primary">Sign Up</a>
+                    <a href="{% url 'accounts:login' %}" class="btn btn-outline-primary">Log In</a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %} 

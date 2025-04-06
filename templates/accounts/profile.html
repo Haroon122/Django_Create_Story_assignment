@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile_user.username }}'s Profile - TaleForge{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-body text-center">
+                {% if profile_user.avatar %}
+                <img src="{{ profile_user.avatar.url }}" alt="{{ profile_user.username }}'s avatar" class="rounded-circle img-fluid mb-3" style="max-width: 150px;">
+                {% else %}
+                <img src="https://ui-avatars.com/api/?name={{ profile_user.username }}&size=150" alt="{{ profile_user.username }}'s avatar" class="rounded-circle img-fluid mb-3">
+                {% endif %}
+                <h3 class="card-title">{{ profile_user.username }}</h3>
+                {% if profile_user.bio %}
+                <p class="card-text">{{ profile_user.bio }}</p>
+                {% endif %}
+                <p class="text-muted">Member since {{ profile_user.date_joined|date }}</p>
+                {% if user == profile_user %}
+                <a href="{% url 'accounts:edit_profile' %}" class="btn btn-primary">Edit Profile</a>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Statistics</h4>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col">
+                        <h5>{{ profile_user.stories_created }}</h5>
+                        <small class="text-muted">Stories</small>
+                    </div>
+                    <div class="col">
+                        <h5>{{ profile_user.chapters_written }}</h5>
+                        <small class="text-muted">Chapters</small>
+                    </div>
+                    <div class="col">
+                        <h5>{{ profile_user.votes_cast }}</h5>
+                        <small class="text-muted">Votes</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Stories</h4>
+            </div>
+            <div class="card-body">
+                {% if stories %}
+                <div class="list-group">
+                    {% for story in stories %}
+                    <a href="{% url 'stories:story_detail' story.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ story.title }}</h5>
+                            <small class="text-muted">{{ story.created_at|date }}</small>
+                        </div>
+                        <p class="mb-1">{{ story.description|truncatewords:30 }}</p>
+                        <small class="text-muted">{{ story.genre }} • {{ story.chapters.count }} chapters</small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No stories created yet.</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">
+                <h4 class="card-title mb-0">Recent Chapters</h4>
+            </div>
+            <div class="card-body">
+                {% if chapters %}
+                <div class="list-group">
+                    {% for chapter in chapters %}
+                    <a href="{% url 'stories:chapter_detail' chapter.pk %}" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">{{ chapter.title }}</h5>
+                            <small class="text-muted">{{ chapter.created_at|date }}</small>
+                        </div>
+                        <p class="mb-1">{{ chapter.content|truncatewords:30 }}</p>
+                        <small class="text-muted">
+                            In {{ chapter.story.title }} •
+                            {% if chapter.status == 'approved' %}
+                            <span class="text-success">Approved</span>
+                            {% elif chapter.status == 'pending' %}
+                            <span class="text-warning">Pending</span>
+                            {% else %}
+                            <span class="text-danger">Rejected</span>
+                            {% endif %}
+                        </small>
+                    </a>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center">No chapters written yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
